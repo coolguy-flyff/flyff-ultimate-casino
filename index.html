@@ -1193,7 +1193,7 @@
       <span class="panel-label">Step 2 · Feed the machine</span>
       <div class="scroll-rack">
         <div class="scroll-row sr-base">
-          <img src="https://flyffipedia.com/Icons/Items/scrollultimateawake.png" alt="" width="40" height="40">
+          <img src="https://api.flyff.com/image/item/scrollultimateawake.png" alt="" width="40" height="40">
           <div>
             <div class="sr-name">Scroll of Ultimate Power</div>
             <div class="sr-price">300 fCoins · rerolls all base lines</div>
@@ -1205,7 +1205,7 @@
           </div>
         </div>
         <div class="scroll-row sr-yellow">
-          <img src="https://flyffipedia.com/Icons/Items/scrollultimateawake2.png" alt="" width="40" height="40">
+          <img src="https://api.flyff.com/image/item/scrollultimateawake2.png" alt="" width="40" height="40">
           <div>
             <div class="sr-name">Scroll of Ultimate Bonus</div>
             <div class="sr-price">1,000 fCoins · rerolls both yellow lines</div>
@@ -1217,7 +1217,7 @@
           </div>
         </div>
         <div class="scroll-row sr-orange">
-          <img src="https://flyffipedia.com/Icons/Items/scrollultimateawake3.png" alt="" width="40" height="40">
+          <img src="https://api.flyff.com/image/item/scrollultimateawake3.png" alt="" width="40" height="40">
           <div>
             <div class="sr-name">Scroll of Ultimate Bonus II</div>
             <div class="sr-price">1,000 fCoins · rerolls the orange lines</div>
@@ -1548,6 +1548,11 @@ function penyaPerFc() {
 function fcToUsd(fc) {
 
   return fc / FC_PER_100_USD * 100;
+}
+
+function itemIconUrl(fileName) {
+
+  return 'https://api.flyff.com/image/item/' + fileName;
 }
 
 function statName(entry) {
@@ -1933,7 +1938,7 @@ function renderItemCard(bumpGroup) {
   }
 
   $('item-card').classList.add('show');
-  $('item-icon').src = 'https://flyffipedia.com/Icons/Items/' + weapon.icon;
+  $('item-icon').src = itemIconUrl(weapon.icon);
   $('item-name').textContent = weapon.name + (state.upgrade > 0 ? ' +' + state.upgrade : '');
   $('item-meta').textContent =
     'Lv. ' + weapon.level + ' · ' + weapon.job + ' · ' +
@@ -2682,7 +2687,7 @@ function renderDrop(query) {
       btn.type = 'button';
       btn.setAttribute('role', 'option');
       btn.innerHTML = '<img alt="" loading="lazy"><span class="w-name"></span><span class="w-meta"></span>';
-      btn.querySelector('img').src = 'https://flyffipedia.com/Icons/Items/' + weapon.icon;
+      btn.querySelector('img').src = itemIconUrl(weapon.icon);
       btn.querySelector('.w-name').textContent = weapon.name;
       btn.querySelector('.w-meta').textContent = 'Lv. ' + weapon.level + ' · ' + weapon.job + ' · ' + weapon.subcategory;
       btn.addEventListener('click', function () {

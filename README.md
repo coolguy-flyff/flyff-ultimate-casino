@@ -54,9 +54,9 @@ fCoins, penya, and real money.
 | `tools/build-data.mjs`| Regenerates `data/weapons.js` from `data-src/`.                   |
 
 Just open `index.html` in a browser — `data/weapons.js` ships with the repo, so no
-build step is needed. Weapon and scroll icons are loaded from
-[Flyffipedia](https://flyffipedia.com/), so the pictures need an internet connection;
-the math does not.
+build step is needed. Weapon and scroll icons are loaded from the official
+[Flyff Universe API](https://api.flyff.com/), so the pictures need an internet
+connection; the math does not.
 
 To regenerate the data (e.g. after a game patch), drop Flyffulator's dumps —
 `items.json`, `statnames.json`, `skills.json`, `classes.json` — into `data-src/`
