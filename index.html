@@ -1,0 +1,2860 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ultimate Casino</title>
+<meta name="description" content="Flyff Universe ultimate weapon reroll simulator. Feed your Lusaka scrolls, chase perfect yellow and orange lines, and see what the grind really costs — hypothetically.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎰</text></svg>">
+<meta name="theme-color" content="#e8b84b">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Ultimate Casino">
+<meta property="og:title" content="Ultimate Casino — Flyff Universe Ultimate Reroll Simulator">
+<meta property="og:description" content="The high-limit room. Ultimate weapons only. Reroll base lines, yellow lines, and orange lines with real scroll prices — and lose everything hypothetically first.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Limelight&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --felt-deep: #150b0d;
+    --felt: #1c1013;
+    --panel: #251418;
+    --panel-edge: #3d2228;
+    --ink: #f0e8dd;
+    --ink-dim: #a28c90;
+    --gold: #e8b84b;
+    --gold-soft: #c9a04a;
+    --gold-glow: rgba(232, 184, 75, 0.35);
+    --loss: #e05c4a;
+    --win: #7fc97f;
+    --line-base: #d8e6f4;
+    --line-yellow: #ffd24a;
+    --line-orange: #ff9838;
+    --line-locked: #6b585c;
+    --display: 'Limelight', 'Georgia', serif;
+    --body: 'Avenir Next', 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+    --mono: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, Consolas, monospace;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    background: var(--felt-deep);
+  }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1100px 500px at 50% -10%, #2b171c 0%, transparent 65%),
+      var(--felt-deep);
+    color: var(--ink);
+    font-family: var(--body);
+    line-height: 1.55;
+    font-size: 16px;
+  }
+
+  main.layout {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px 40px;
+    display: grid;
+    grid-template-columns: minmax(340px, 430px) minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+  }
+
+  .rail {
+    position: sticky;
+    top: 14px;
+  }
+
+  @media (max-width: 940px) {
+    main.layout {
+      grid-template-columns: 1fr;
+    }
+
+    .rail {
+      position: static;
+    }
+  }
+
+  a {
+    color: var(--gold);
+  }
+
+  /* ---------- Marquee header ---------- */
+
+  header.marquee {
+    position: relative;
+    max-width: 1200px;
+    margin: 28px auto 34px;
+    padding: 34px 20px 30px;
+    text-align: center;
+    border: 3px double var(--gold-soft);
+    border-radius: 6px;
+    background:
+      radial-gradient(600px 220px at 50% 0%, rgba(232, 184, 75, 0.08), transparent 70%),
+      var(--felt);
+  }
+
+  @media (max-width: 1240px) {
+    header.marquee {
+      margin-left: 20px;
+      margin-right: 20px;
+    }
+  }
+
+  header.marquee .bulbs {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    height: 8px;
+    background-image: radial-gradient(circle 2.5px at 9px 4px, var(--gold) 0 2px, transparent 2.6px);
+    background-size: 22px 8px;
+    background-repeat: repeat-x;
+    animation: blink 1.1s steps(2) infinite;
+  }
+
+  header.marquee .bulbs.top {
+    top: 7px;
+  }
+
+  header.marquee .bulbs.bottom {
+    bottom: 7px;
+    animation-delay: 0.55s;
+  }
+
+  @keyframes blink {
+    50% {
+      opacity: 0.25;
+    }
+  }
+
+  header.marquee h1 {
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: clamp(2rem, 6.5vw, 3.6rem);
+    letter-spacing: 0.04em;
+    margin: 0;
+    color: var(--gold);
+    text-shadow:
+      0 0 18px var(--gold-glow),
+      0 0 60px rgba(232, 184, 75, 0.18);
+    text-wrap: balance;
+  }
+
+  header.marquee p.tag {
+    margin: 10px auto 0;
+    max-width: 62ch;
+    color: var(--ink-dim);
+    font-size: 0.95rem;
+  }
+
+  header.marquee p.tag em {
+    color: var(--ink);
+    font-style: normal;
+  }
+
+  /* ---------- Panels ---------- */
+
+  section.panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-radius: 8px;
+    padding: 20px 22px;
+    margin-bottom: 18px;
+  }
+
+  .panel-label {
+    display: block;
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold-soft);
+    margin-bottom: 14px;
+  }
+
+  .hint {
+    color: var(--ink-dim);
+    font-size: 0.84rem;
+    margin: 8px 0 0;
+  }
+
+  /* ---------- Weapon picker ---------- */
+
+  .picker {
+    position: relative;
+  }
+
+  .picker input[type="text"] {
+    width: 100%;
+    background: var(--felt-deep);
+    color: var(--ink);
+    border: 1px solid var(--panel-edge);
+    border-radius: 6px;
+    padding: 11px 13px;
+    font-family: var(--body);
+    font-size: 0.95rem;
+  }
+
+  .picker input:focus {
+    outline: 2px solid var(--gold);
+    outline-offset: 1px;
+    border-color: var(--gold-soft);
+  }
+
+  .picker .drop {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    max-height: 340px;
+    overflow-y: auto;
+    background: var(--felt);
+    border: 1px solid var(--gold-soft);
+    border-radius: 6px;
+    z-index: 30;
+    display: none;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
+  }
+
+  .picker .drop.open {
+    display: block;
+  }
+
+  .picker .drop button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    border-bottom: 1px solid rgba(61, 34, 40, 0.6);
+    color: var(--ink);
+    padding: 8px 12px;
+    font-family: var(--body);
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  .picker .drop button:hover,
+  .picker .drop button:focus-visible {
+    background: rgba(232, 184, 75, 0.08);
+    outline: none;
+  }
+
+  .picker .drop img {
+    width: 28px;
+    height: 28px;
+    image-rendering: pixelated;
+    flex: 0 0 auto;
+  }
+
+  .picker .drop .w-meta {
+    color: var(--ink-dim);
+    font-size: 0.74rem;
+    margin-left: auto;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .picker .drop .none {
+    padding: 10px 12px;
+    color: var(--ink-dim);
+    font-style: italic;
+  }
+
+  /* ---------- Upgrade selector ---------- */
+
+  .upgrade-label {
+    font-size: 0.8rem;
+    color: var(--ink-dim);
+    margin-top: 14px;
+  }
+
+  .upgrade-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 6px;
+  }
+
+  .upgrade-row button {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 5px 0;
+    background: var(--felt);
+    color: var(--ink-dim);
+    border: 1px solid var(--panel-edge);
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    cursor: pointer;
+  }
+
+  .upgrade-row button[aria-pressed="true"] {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--felt-deep);
+    font-weight: 700;
+  }
+
+  .upgrade-row button:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
+
+  /* ---------- Item card ---------- */
+
+  .item-card {
+    display: none;
+    margin-top: 16px;
+    background: #140c10;
+    border: 1px solid var(--gold-soft);
+    border-radius: 8px;
+    padding: 14px 16px;
+    box-shadow: 0 0 30px rgba(232, 184, 75, 0.07);
+  }
+
+  .item-card.show {
+    display: block;
+  }
+
+  .item-head {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    border-bottom: 1px solid var(--panel-edge);
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+  }
+
+  .item-head img {
+    width: 44px;
+    height: 44px;
+    image-rendering: pixelated;
+  }
+
+  .item-head .i-name {
+    font-size: 1.08rem;
+    font-weight: 600;
+    color: var(--gold);
+    text-shadow: 0 0 12px var(--gold-glow);
+  }
+
+  .item-head .i-meta {
+    color: var(--ink-dim);
+    font-size: 0.78rem;
+    margin-top: 2px;
+  }
+
+  .line-block {
+    margin: 8px 0;
+  }
+
+  .line-block h3 {
+    margin: 0 0 4px;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 500;
+    color: var(--ink-dim);
+  }
+
+  .stat-line {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.88rem;
+    padding: 2px 0;
+  }
+
+  .stat-line .dot {
+    flex: 0 0 auto;
+    font-size: 0.76rem;
+  }
+
+  .stat-line .name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .stat-line .val {
+    margin-left: auto;
+    font-weight: 600;
+  }
+
+  .stat-line .range {
+    color: var(--ink-dim);
+    font-size: 0.72rem;
+    min-width: 74px;
+    text-align: right;
+  }
+
+  .stat-line.base {
+    color: var(--line-base);
+  }
+
+  .stat-line.yellow {
+    color: var(--line-yellow);
+  }
+
+  .stat-line.orange {
+    color: var(--line-orange);
+  }
+
+  .stat-line.locked {
+    color: var(--line-locked);
+    font-style: italic;
+  }
+
+  .stat-line.bump .val {
+    animation: bump 0.45s ease-out;
+  }
+
+  @keyframes bump {
+    0% {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+
+    100% {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .item-foot {
+    border-top: 1px solid var(--panel-edge);
+    margin-top: 8px;
+    padding-top: 8px;
+    color: var(--ink-dim);
+    font-size: 0.76rem;
+    font-style: italic;
+  }
+
+  /* ---------- Scroll rack (single pulls) ---------- */
+
+  .scroll-rack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .scroll-row {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    border: 1px solid var(--panel-edge);
+    border-radius: 8px;
+    padding: 12px 14px;
+    background: var(--felt);
+  }
+
+  .scroll-row img {
+    width: 40px;
+    height: 40px;
+    image-rendering: pixelated;
+  }
+
+  .scroll-row.sr-base {
+    border-left: 3px solid var(--line-base);
+  }
+
+  .scroll-row.sr-yellow {
+    border-left: 3px solid var(--line-yellow);
+  }
+
+  .scroll-row.sr-orange {
+    border-left: 3px solid var(--line-orange);
+  }
+
+  .scroll-row .sr-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .scroll-row .sr-price {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--gold);
+    font-size: 0.8rem;
+  }
+
+  .scroll-row .sr-note {
+    color: var(--ink-dim);
+    font-size: 0.78rem;
+    margin-top: 3px;
+  }
+
+  .scroll-row .sr-note em {
+    color: var(--ink);
+    font-style: normal;
+  }
+
+  .scroll-row .sr-action {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 5px;
+    min-width: 96px;
+  }
+
+  .scroll-row .sr-status {
+    font-size: 0.7rem;
+    font-family: var(--mono);
+    color: var(--ink-dim);
+    text-align: center;
+    min-height: 1em;
+  }
+
+  button.pull {
+    font-family: var(--display);
+    font-size: 1rem;
+    letter-spacing: 0.06em;
+    color: #241a06;
+    background: linear-gradient(180deg, #f4d078 0%, var(--gold) 55%, #b8862e 100%);
+    border: 1px solid #8a6420;
+    border-radius: 8px;
+    padding: 9px 16px;
+    cursor: pointer;
+    box-shadow:
+      0 3px 0 #6d4d15,
+      0 8px 24px rgba(232, 184, 75, 0.2);
+    transition: transform 0.08s, box-shadow 0.08s;
+  }
+
+  button.pull:active {
+    transform: translateY(3px);
+    box-shadow: 0 0 0 #6d4d15, 0 4px 12px rgba(232, 184, 75, 0.2);
+  }
+
+  button.pull:focus-visible {
+    outline: 3px solid var(--ink);
+    outline-offset: 3px;
+  }
+
+  button.pull:disabled {
+    filter: grayscale(0.75) brightness(0.65);
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  @media (max-width: 560px) {
+    .scroll-row {
+      grid-template-columns: 44px minmax(0, 1fr);
+    }
+
+    .scroll-row .sr-action {
+      grid-column: 1 / -1;
+    }
+  }
+
+  .pull-error {
+    margin-top: 12px;
+    color: var(--loss);
+    font-size: 0.88rem;
+    min-height: 1.3em;
+  }
+
+  /* ---------- Chase targets ---------- */
+
+  .target-groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+  }
+
+  .target-group {
+    display: flex;
+    flex-direction: column;
+    background: var(--felt);
+    border: 1px solid var(--panel-edge);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+
+  .target-group h3 {
+    margin: 0 0 10px;
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  .target-group.tg-base h3 {
+    color: var(--line-base);
+  }
+
+  .target-group.tg-yellow h3 {
+    color: var(--line-yellow);
+  }
+
+  .target-group.tg-orange h3 {
+    color: var(--line-orange);
+  }
+
+  .target-group.disabled {
+    opacity: 0.45;
+  }
+
+  .target-group .tg-body {
+    flex: 1 1 auto;
+  }
+
+  .t-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0;
+    font-size: 0.85rem;
+  }
+
+  .t-row .t-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .t-row .t-range {
+    color: var(--ink-dim);
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    white-space: nowrap;
+  }
+
+  .t-row input[type="number"] {
+    width: 72px;
+    background: var(--felt-deep);
+    color: var(--ink);
+    border: 1px solid var(--panel-edge);
+    border-radius: 5px;
+    padding: 5px 7px;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+  }
+
+  .t-row select {
+    flex: 1 1 auto;
+    min-width: 0;
+    background: var(--felt-deep);
+    color: var(--ink);
+    border: 1px solid var(--panel-edge);
+    border-radius: 5px;
+    padding: 6px 7px;
+    font-family: var(--body);
+    font-size: 0.85rem;
+  }
+
+  .t-row input:focus,
+  .t-row select:focus {
+    outline: 2px solid var(--gold);
+    outline-offset: 1px;
+  }
+
+  .tg-tools {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .tg-tools button {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-size: 0.8rem;
+    color: var(--gold-soft);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .tg-tools button:hover {
+    color: var(--gold);
+  }
+
+  .tg-odds {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--panel-edge);
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.76rem;
+    color: var(--ink-dim);
+    min-height: 1.2em;
+  }
+
+  .tg-odds strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .tg-odds.bad {
+    color: var(--loss);
+  }
+
+  button.chase {
+    margin-top: 10px;
+    font-family: var(--display);
+    font-size: 0.95rem;
+    letter-spacing: 0.06em;
+    color: var(--gold);
+    background: none;
+    border: 1px solid var(--gold-soft);
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+  }
+
+  button.chase:hover:not(:disabled) {
+    background: rgba(232, 184, 75, 0.12);
+  }
+
+  button.chase:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
+
+  button.chase:disabled {
+    color: var(--line-locked);
+    border-color: var(--panel-edge);
+    cursor: not-allowed;
+  }
+
+  .chase-cap {
+    margin-top: 14px;
+    max-width: 300px;
+  }
+
+  /* ---------- Economy ---------- */
+
+  .econ-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px 22px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--ink-dim);
+    margin-bottom: 5px;
+  }
+
+  .field input[type="number"] {
+    width: 100%;
+    background: var(--felt-deep);
+    color: var(--ink);
+    border: 1px solid var(--panel-edge);
+    border-radius: 6px;
+    padding: 9px 11px;
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.95rem;
+  }
+
+  .field input:focus {
+    outline: 2px solid var(--gold);
+    outline-offset: 1px;
+    border-color: var(--gold-soft);
+  }
+
+  .field .fixed-value {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    padding: 9px 11px;
+    background: var(--felt-deep);
+    border: 1px dashed var(--panel-edge);
+    border-radius: 6px;
+    color: var(--ink-dim);
+  }
+
+  .econ-summary {
+    margin: 14px 0 0;
+    font-size: 0.86rem;
+    color: var(--ink-dim);
+    border-top: 1px solid var(--panel-edge);
+    padding-top: 12px;
+  }
+
+  .econ-summary strong {
+    color: var(--ink);
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+  }
+
+  /* ---------- Chase overlay ---------- */
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 5, 6, 0.94);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    z-index: 50;
+    padding: 20px;
+    text-align: center;
+  }
+
+  .overlay.show {
+    display: flex;
+  }
+
+  .overlay .burn-box {
+    border: 3px double var(--gold-soft);
+    border-radius: 10px;
+    padding: 26px 40px;
+    background: var(--felt);
+    box-shadow: 0 0 60px rgba(232, 184, 75, 0.15);
+    min-width: min(84vw, 420px);
+  }
+
+  .overlay .burn-count {
+    font-family: var(--display);
+    font-size: clamp(2rem, 8vw, 3.2rem);
+    color: var(--gold);
+    text-shadow: 0 0 18px var(--gold-glow);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .overlay .burn-label {
+    color: var(--ink-dim);
+    font-size: 0.85rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .overlay .burn-cost {
+    margin-top: 14px;
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--loss);
+    font-size: 1.05rem;
+  }
+
+  .overlay .spin-caption {
+    margin-top: 22px;
+    color: var(--ink-dim);
+    font-size: 0.95rem;
+    font-style: italic;
+    min-height: 1.4em;
+  }
+
+  .overlay button.cashout {
+    margin-top: 18px;
+    background: none;
+    border: 1px solid var(--panel-edge);
+    color: var(--ink-dim);
+    border-radius: 6px;
+    padding: 8px 18px;
+    font-family: var(--body);
+    font-size: 0.88rem;
+    cursor: pointer;
+  }
+
+  .overlay button.cashout:hover {
+    color: var(--ink);
+    border-color: var(--gold-soft);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    header.marquee .bulbs {
+      animation: none;
+    }
+
+    .stat-line.bump .val {
+      animation: none;
+    }
+  }
+
+  /* ---------- Damage report ---------- */
+
+  section.results {
+    display: none;
+  }
+
+  section.results.show {
+    display: block;
+  }
+
+  .results h2 {
+    font-family: var(--display);
+    font-weight: 400;
+    color: var(--gold);
+    font-size: 1.7rem;
+    letter-spacing: 0.04em;
+    margin: 18px 0 6px;
+  }
+
+  .damage-headline {
+    font-size: clamp(1.05rem, 3vw, 1.4rem);
+    color: var(--loss);
+    font-weight: 600;
+    margin: 6px 0 18px;
+    text-wrap: balance;
+  }
+
+  .stat-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .stat-card {
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+
+  .stat-card .k {
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+
+  .stat-card .v {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 1.25rem;
+    margin-top: 4px;
+    color: var(--ink);
+  }
+
+  .stat-card .v.money {
+    color: var(--loss);
+  }
+
+  .stat-card .s {
+    font-size: 0.78rem;
+    color: var(--ink-dim);
+    margin-top: 3px;
+  }
+
+  /* ---------- Ledger ---------- */
+
+  .ledger {
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-radius: 8px;
+    padding: 16px 18px;
+    margin-bottom: 16px;
+  }
+
+  .ledger-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .ledger-head .panel-label {
+    margin-bottom: 0;
+  }
+
+  .ledger-head button {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-size: 0.8rem;
+    color: var(--gold-soft);
+    text-decoration: underline;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .ledger-head button:hover {
+    color: var(--gold);
+  }
+
+  .ledger .table-scroll {
+    overflow-x: auto;
+    max-height: 420px;
+    overflow-y: auto;
+    margin-top: 12px;
+  }
+
+  .ledger table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+
+  .ledger th {
+    text-align: left;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-dim);
+    font-weight: 500;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--panel-edge);
+    position: sticky;
+    top: 0;
+    background: var(--panel);
+    z-index: 1;
+  }
+
+  .ledger td {
+    padding: 7px 10px;
+    border-bottom: 1px solid rgba(61, 34, 40, 0.5);
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    vertical-align: top;
+  }
+
+  .ledger td.num,
+  .ledger th.num {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .ledger .l-lines {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
+
+  .ledger .l-line.base {
+    color: var(--line-base);
+  }
+
+  .ledger .l-line.yellow {
+    color: var(--line-yellow);
+  }
+
+  .ledger .l-line.orange {
+    color: var(--line-orange);
+  }
+
+  .chip {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    padding: 1px 8px;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+  }
+
+  .chip.hit {
+    color: var(--win);
+  }
+
+  .chip.miss {
+    color: var(--loss);
+  }
+
+  .ledger .trimmed {
+    color: var(--ink-dim);
+    font-style: italic;
+    font-size: 0.8rem;
+    margin-top: 8px;
+  }
+
+  .closing-line {
+    color: var(--ink-dim);
+    font-style: italic;
+    font-size: 0.92rem;
+    margin: 18px 0 4px;
+  }
+
+  /* ---------- Footer ---------- */
+
+  footer {
+    max-width: 1200px;
+    margin: 30px auto 26px;
+    padding: 16px 20px 0;
+    border-top: 1px solid var(--panel-edge);
+    color: var(--ink-dim);
+    font-size: 0.8rem;
+    text-align: center;
+  }
+
+  footer p {
+    margin: 6px 0;
+  }
+
+  footer details {
+    max-width: 640px;
+    margin: 10px auto 0;
+    text-align: left;
+  }
+
+  footer details summary {
+    cursor: pointer;
+    color: var(--gold-soft);
+    text-align: center;
+  }
+
+  footer details ul {
+    margin: 8px 0;
+    padding-left: 20px;
+  }
+</style>
+</head>
+<body>
+<header class="marquee">
+  <div class="bulbs top"></div>
+  <h1>Ultimate Casino</h1>
+  <p class="tag">The high-limit room upstairs from the Blessing Casino. <em>Ultimate weapons only.</em> Pick your blade, name your dream lines, and feed it scrolls until the numbers are pretty or the wallet gives out — <em>hypothetically</em>.</p>
+  <div class="bulbs bottom"></div>
+</header>
+
+<main class="layout">
+  <div class="rail">
+    <section class="panel">
+      <span class="panel-label">Step 1 · Choose your weapon</span>
+      <div class="picker">
+        <input type="text" id="weapon-search" placeholder="Search 83 ultimate weapons…" autocomplete="off" spellcheck="false" aria-label="Search ultimate weapons">
+        <div class="drop" id="weapon-drop" role="listbox"></div>
+      </div>
+      <div class="upgrade-label" id="upgrade-label">Upgrade level</div>
+      <div class="upgrade-row" id="upgrade-row" role="group" aria-labelledby="upgrade-label"></div>
+      <p class="hint">Orange lines open at <strong>+6</strong>; the second seat at the orange table opens at <strong>+10</strong>.</p>
+
+      <div class="item-card" id="item-card" aria-live="polite">
+        <div class="item-head">
+          <img id="item-icon" alt="" width="44" height="44">
+          <div>
+            <div class="i-name" id="item-name"></div>
+            <div class="i-meta" id="item-meta"></div>
+          </div>
+        </div>
+        <div class="line-block">
+          <h3>Base lines · Scroll of Ultimate Power</h3>
+          <div id="base-lines"></div>
+        </div>
+        <div class="line-block">
+          <h3>Yellow lines · Scroll of Ultimate Bonus</h3>
+          <div id="yellow-lines"></div>
+        </div>
+        <div class="line-block">
+          <h3>Orange lines · Scroll of Ultimate Bonus II</h3>
+          <div id="orange-lines"></div>
+        </div>
+        <div class="item-foot" id="item-foot">Fresh off the showroom floor — first rolls on the house.</div>
+      </div>
+    </section>
+  </div>
+
+  <div class="flow">
+    <section class="panel">
+      <span class="panel-label">Step 2 · Feed the machine</span>
+      <div class="scroll-rack">
+        <div class="scroll-row sr-base">
+          <img src="https://flyffipedia.com/Icons/Items/scrollultimateawake.png" alt="" width="40" height="40">
+          <div>
+            <div class="sr-name">Scroll of Ultimate Power</div>
+            <div class="sr-price">300 fCoins · rerolls all base lines</div>
+            <div class="sr-note">Every base line rerolls at once — <em>all of them, together</em>, including the one you liked. The table does not take partial bets.</div>
+          </div>
+          <div class="sr-action">
+            <button class="pull" id="pull-base" disabled>Pull</button>
+            <div class="sr-status" id="status-base"></div>
+          </div>
+        </div>
+        <div class="scroll-row sr-yellow">
+          <img src="https://flyffipedia.com/Icons/Items/scrollultimateawake2.png" alt="" width="40" height="40">
+          <div>
+            <div class="sr-name">Scroll of Ultimate Bonus</div>
+            <div class="sr-price">1,000 fCoins · rerolls both yellow lines</div>
+            <div class="sr-note">Two fresh stats off the weapon's pool, values rolled within range. No stat appears twice on a weapon — <em>house rules</em> — so whatever orange holds is off the yellow menu.</div>
+          </div>
+          <div class="sr-action">
+            <button class="pull" id="pull-yellow" disabled>Pull</button>
+            <div class="sr-status" id="status-yellow"></div>
+          </div>
+        </div>
+        <div class="scroll-row sr-orange">
+          <img src="https://flyffipedia.com/Icons/Items/scrollultimateawake3.png" alt="" width="40" height="40">
+          <div>
+            <div class="sr-name">Scroll of Ultimate Bonus II</div>
+            <div class="sr-price">1,000 fCoins · rerolls the orange lines</div>
+            <div class="sr-note">The VIP lounge: same stat pool, half the numbers. Opens at <em>+6</em>, seats two at <em>+10</em>, and won't let you in a scroll earlier.</div>
+          </div>
+          <div class="sr-action">
+            <button class="pull" id="pull-orange" disabled>Pull</button>
+            <div class="sr-status" id="status-orange"></div>
+          </div>
+        </div>
+      </div>
+      <div class="pull-error" id="pull-error" role="alert"></div>
+    </section>
+
+    <section class="panel">
+      <span class="panel-label">Step 3 · Chase your dream lines</span>
+      <div class="target-groups">
+        <div class="target-group tg-base" id="tg-base">
+          <h3>Base lines</h3>
+          <div class="tg-body">
+            <div id="base-targets"><p class="hint">Pick a weapon first.</p></div>
+            <div class="tg-tools" id="base-tools" style="display: none;">
+              <button type="button" id="base-perfect">demand perfection</button>
+              <button type="button" id="base-clear">clear</button>
+            </div>
+          </div>
+          <div class="tg-odds" id="odds-base"></div>
+          <button class="chase" id="chase-base" disabled>Chase</button>
+        </div>
+        <div class="target-group tg-yellow" id="tg-yellow">
+          <h3>Yellow lines</h3>
+          <div class="tg-body">
+            <div id="yellow-targets"><p class="hint">Pick a weapon first.</p></div>
+            <div class="tg-tools" id="yellow-tools" style="display: none;">
+              <button type="button" id="yellow-perfect">demand perfection</button>
+              <button type="button" id="yellow-clear">clear</button>
+            </div>
+          </div>
+          <div class="tg-odds" id="odds-yellow"></div>
+          <button class="chase" id="chase-yellow" disabled>Chase</button>
+        </div>
+        <div class="target-group tg-orange" id="tg-orange">
+          <h3>Orange lines</h3>
+          <div class="tg-body">
+            <div id="orange-targets"><p class="hint">Pick a weapon first.</p></div>
+            <div class="tg-tools" id="orange-tools" style="display: none;">
+              <button type="button" id="orange-perfect">demand perfection</button>
+              <button type="button" id="orange-clear">clear</button>
+            </div>
+          </div>
+          <div class="tg-odds" id="odds-orange"></div>
+          <button class="chase" id="chase-orange" disabled>Chase</button>
+        </div>
+      </div>
+      <div class="field chase-cap">
+        <label for="give-up">Give up after (scrolls, per chase)</label>
+        <input type="number" id="give-up" value="10000" min="1" max="10000000" step="1">
+      </div>
+      <p class="hint">Set a target stat and an optional minimum, then hit <em>Chase</em> — the machine burns scrolls until every target in the group lands, or the cap saves you from yourself. Blank minimums accept any value; blank stat rows are ignored.</p>
+    </section>
+
+    <section class="results" id="results" aria-live="polite">
+      <h2>The Damage Report</h2>
+      <p class="damage-headline" id="damage-headline"></p>
+      <div class="stat-cards" id="stat-cards"></div>
+      <div class="ledger">
+        <div class="ledger-head">
+          <span class="panel-label">The ledger · every scroll, on the record</span>
+          <button type="button" id="reset-ledger">walk away (reset)</button>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th class="num">#</th>
+                <th>Scroll</th>
+                <th>Result</th>
+                <th class="num">Cost</th>
+              </tr>
+            </thead>
+            <tbody id="ledger-body"></tbody>
+          </table>
+        </div>
+        <p class="trimmed" id="ledger-trimmed" style="display: none;"></p>
+      </div>
+      <p class="closing-line" id="closing-line"></p>
+    </section>
+
+    <section class="panel">
+      <span class="panel-label">The exchange desk · reference rates</span>
+      <div class="econ-grid">
+        <div class="field">
+          <label for="rate">1,000 fCoins = ___ million Penya</label>
+          <input type="number" id="rate" value="320" min="0.001" step="1">
+        </div>
+        <div class="field">
+          <label>Real-money anchor</label>
+          <div class="fixed-value">11,500 fCoins = $100</div>
+        </div>
+        <div class="field">
+          <label>Scroll prices</label>
+          <div class="fixed-value">300 / 1,000 / 1,000 fCoins (the cashier does not haggle)</div>
+        </div>
+      </div>
+      <p class="econ-summary" id="econ-summary"></p>
+      <p class="hint">Scrolls trade player-to-player, so the Penya figure is the street value of your habit — feel the loss in your native currency.</p>
+    </section>
+  </div>
+</main>
+
+<div class="overlay" id="overlay" aria-hidden="true">
+  <div class="burn-box">
+    <div class="burn-count" id="burn-count">0</div>
+    <div class="burn-label" id="burn-label">scrolls burned</div>
+    <div class="burn-cost" id="burn-cost">−0 fCoins</div>
+  </div>
+  <div class="spin-caption" id="spin-caption">Warming up the dice…</div>
+  <button class="cashout" id="cashout">Cash out early</button>
+</div>
+
+<footer>
+  <p>
+    No clocks. No windows. No refunds. · Item data and stat ranges straight from the live game files ·
+    Not affiliated with Gala Lab — they have enough of your money already.
+  </p>
+  <details>
+    <summary>House rules &amp; odds assumptions</summary>
+    <ul>
+      <li>Every roll is uniform within its printed range — Gala doesn't publish the curves, so the felt assumes the fairest possible table.</li>
+      <li>Attack Speed, Critical Damage, Critical Chance, Block Penetration, Lifesteal, and Attack roll in 0.1 increments; every other stat rolls whole points.</li>
+      <li>Orange ranges are the yellow ranges halved and floored to the stat's increment: HP 4~9 becomes 2~4, and Lifesteal 0.8~1.8 becomes 0.4~0.9.</li>
+      <li>Ultimate stats never repeat on one weapon — not within a color, not across yellow and orange. Rerolls respect whatever the other color currently holds.</li>
+      <li>A Scroll of Ultimate Power rerolls <em>every</em> base line together; the Bonus scrolls reroll <em>both</em> lines of their color together.</li>
+      <li>Reaching +6 / +10 rolls the newly unlocked orange line on the house — this establishment only bills you for scrolls.</li>
+    </ul>
+  </details>
+  <p>Disclaimer: all commentary on this page is satire, for fun only. The prices and the math, regrettably, are real.</p>
+</footer>
+
+<script src="data/weapons.js"></script>
+<script>
+'use strict';
+
+/* ================================================================
+ * CONSTANTS
+ * ================================================================
+ * All stat values are handled in integer tenths (see data/weapons.js),
+ * so 4.2% lives as 42 and no floating point ever touches a roll.
+ * ================================================================ */
+
+const FC_PER_100_USD = 11500;
+const MAX_LEDGER_RENDERED = 300;
+const CHASE_CHUNK = 200000;
+const MIN_CHASE_MS = 2400;
+
+const SCROLLS = {
+  base: { label: 'Scroll of Ultimate Power', short: 'Power', price: 300 },
+  yellow: { label: 'Scroll of Ultimate Bonus', short: 'Bonus', price: 1000 },
+  orange: { label: 'Scroll of Ultimate Bonus II', short: 'Bonus II', price: 1000 },
+};
+
+const ATTACK_SPEED_LABELS = {
+  veryslow: 'Very Slow',
+  slow: 'Slow',
+  normal: 'Normal',
+  fast: 'Fast',
+  veryfast: 'Very Fast',
+};
+
+const SPIN_CAPTIONS = [
+  'Bribing the RNG priest…',
+  'The pit boss is pretending not to watch…',
+  'Explaining sunk cost to your guild…',
+  'Shuffling the stat pool with white gloves…',
+  'Someone at this table just hit theirs. It wasn’t you…',
+  'Polishing the same six stats you keep rolling…',
+  'The cashier has stopped making eye contact…',
+  'Your dream line was just dealt to another table…',
+  'Recounting the fCoins. They’re still gone…',
+];
+
+const DATA = window.CASINO_DATA;
+
+/* ================================================================
+ * STATE
+ * ================================================================ */
+
+const state = {
+  weapon: null,
+  upgrade: 0,
+  base: [],
+  yellow: [],
+  orange: [],
+  spentFc: 0,
+  scrollCounts: { base: 0, yellow: 0, orange: 0 },
+  ledger: [],
+  chasing: false,
+  cashoutRequested: false,
+};
+
+/* ================================================================
+ * SMALL HELPERS
+ * ================================================================ */
+
+const $ = function (id) {
+
+  return document.getElementById(id);
+};
+
+function randInt(n) {
+
+  return Math.floor(Math.random() * n);
+}
+
+function stepCount(range) {
+
+  return (range.hi - range.lo) / range.step + 1;
+}
+
+function rollRange(range) {
+
+  return range.lo + range.step * randInt(stepCount(range));
+}
+
+/* On negative ranges (e.g. Incoming Damage -6%) a bigger reduction is a
+ * better roll, so "goodness" flips the sign before comparing to a target. */
+function goodness(value10, range) {
+
+  let result = value10;
+
+  if (range.neg) {
+
+    result = -value10;
+  }
+
+  return result;
+}
+
+function fmtTenths(value10) {
+
+  const whole = Math.trunc(value10 / 10);
+  const frac = Math.abs(value10 % 10);
+  let result = String(whole);
+
+  if (frac !== 0) {
+
+    if (value10 < 0 && whole === 0) {
+
+      result = '-0';
+    }
+
+    result += '.' + frac;
+  }
+
+  return result;
+}
+
+function fmtStatValue(value10, rate) {
+
+  let result = fmtTenths(value10);
+
+  if (value10 >= 0) {
+
+    result = '+' + result;
+  }
+
+  if (rate) {
+
+    result += '%';
+  }
+
+  return result;
+}
+
+function fmtRangeLabel(range, rate) {
+
+  const suffix = rate ? '%' : '';
+
+  return fmtTenths(range.lo) + suffix + '~' + fmtTenths(range.hi) + suffix;
+}
+
+function fmtInt(n) {
+
+  return Math.round(n).toLocaleString('en-US');
+}
+
+function fmtPenya(penya) {
+
+  let result = fmtInt(penya);
+
+  if (penya >= 1e9) {
+
+    result = (penya / 1e9).toFixed(2).replace(/\.?0+$/, '') + 'b';
+
+  } else if (penya >= 1e6) {
+
+    result = (penya / 1e6).toFixed(1).replace(/\.0$/, '') + 'm';
+  }
+
+  return result;
+}
+
+function fmtUsd(usd) {
+
+  let result = '$' + usd.toFixed(2);
+
+  if (usd >= 1000) {
+
+    result = '$' + fmtInt(usd);
+  }
+
+  return result;
+}
+
+function penyaPerFc() {
+
+  const rate = parseFloat($('rate').value);
+  let result = 0;
+
+  if (Number.isFinite(rate) && rate > 0) {
+
+    result = rate * 1e6 / 1000;
+  }
+
+  return result;
+}
+
+function fcToUsd(fc) {
+
+  return fc / FC_PER_100_USD * 100;
+}
+
+function statName(entry) {
+
+  let result = DATA.statNames[entry.param];
+
+  if (entry.param === 'skillchance' && entry.skill !== undefined) {
+
+    result = DATA.skillNames[entry.skill] + ' Chance';
+  }
+
+  return result;
+}
+
+function orangeCountFor(upgrade) {
+
+  let result = 0;
+
+  if (upgrade >= 10) {
+
+    result = 2;
+
+  } else if (upgrade >= 6) {
+
+    result = 1;
+  }
+
+  return result;
+}
+
+/* ================================================================
+ * ROLL ENGINE
+ * ================================================================ */
+
+function rollBase(weapon) {
+
+  return weapon.abilities.map(function (ability) {
+
+    return rollRange(ability.range);
+  });
+}
+
+/* Picks `count` distinct stats from the weapon's pool, skipping whatever
+ * the other color currently occupies, and rolls each within its range. */
+function rollUltimateLines(weapon, rangeKey, count, excludedParams) {
+
+  const available = [];
+
+  weapon.randomStats.forEach(function (stat, idx) {
+
+    if (!excludedParams.has(stat.param)) {
+
+      available.push(idx);
+    }
+  });
+
+  const lines = [];
+
+  for (let i = 0; i < count; i += 1) {
+
+    const pick = randInt(available.length - i);
+    const idx = available[pick];
+
+    available[pick] = available[available.length - 1 - i];
+    lines.push({ idx: idx, value: rollRange(weapon.randomStats[idx][rangeKey]) });
+  }
+
+  return lines;
+}
+
+function paramsOf(lines) {
+
+  const result = new Set();
+
+  for (const line of lines) {
+
+    result.add(state.weapon.randomStats[line.idx].param);
+  }
+
+  return result;
+}
+
+/* ================================================================
+ * TARGETS
+ * ================================================================
+ * Base targets: one optional minimum per ability row (display units).
+ * Yellow/orange targets: up to two (stat, optional minimum) rows.
+ * ================================================================ */
+
+function readMin(input) {
+
+  const raw = input.value.trim();
+  let result = null;
+
+  if (raw !== '') {
+
+    const parsed = parseFloat(raw);
+
+    if (Number.isFinite(parsed)) {
+
+      result = Math.round(parsed * 10);
+    }
+  }
+
+  return result;
+}
+
+function baseTargets() {
+
+  const result = [];
+
+  state.weapon.abilities.forEach(function (ability, idx) {
+
+    const input = $('bt-' + idx);
+    let min10 = input === null ? null : readMin(input);
+
+    if (min10 !== null) {
+
+      if (ability.range.neg) {
+
+        /* Reduction stats (Incoming Damage -6~-10) are targeted by
+         * magnitude: typing 8 or -8 both mean "at least 8% reduction". */
+        min10 = Math.abs(min10);
+      }
+
+      result.push({ idx: idx, min: min10 });
+    }
+  });
+
+  return result;
+}
+
+function ultimateTargets(color) {
+
+  const result = [];
+
+  for (let row = 0; row < 2; row += 1) {
+
+    const select = $(color + '-stat-' + row);
+
+    if (select !== null && !select.disabled && select.value !== '') {
+
+      result.push({ idx: parseInt(select.value, 10), min: readMin($(color + '-min-' + row)) });
+    }
+  }
+
+  return result;
+}
+
+function baseSatisfied(values, targets) {
+
+  let result = true;
+
+  for (const target of targets) {
+
+    const range = state.weapon.abilities[target.idx].range;
+
+    if (goodness(values[target.idx], range) < target.min) {
+
+      result = false;
+      break;
+    }
+  }
+
+  return result;
+}
+
+/* Stats never repeat within a roll, so each requirement can only ever be
+ * matched by the single line holding that stat. */
+function ultimateSatisfied(lines, targets, rangeKey) {
+
+  let result = true;
+
+  for (const target of targets) {
+
+    const line = lines.find(function (l) {
+
+      return l.idx === target.idx;
+    });
+
+    if (line === undefined) {
+
+      result = false;
+      break;
+    }
+
+    if (target.min !== null) {
+
+      const range = state.weapon.randomStats[target.idx][rangeKey];
+
+      if (goodness(line.value, range) < target.min) {
+
+        result = false;
+        break;
+      }
+    }
+  }
+
+  return result;
+}
+
+/* ================================================================
+ * ODDS
+ * ================================================================ */
+
+/* P(one roll of `range` lands goodness >= min10), counting grid steps. */
+function pValueAtLeast(range, min10) {
+
+  const total = stepCount(range);
+  let passing = 0;
+
+  if (min10 === null) {
+
+    passing = total;
+
+  } else if (range.neg) {
+
+    /* goodness = -value, so we need value <= -min10. */
+    const hi = Math.min(range.hi, -min10);
+
+    if (hi >= range.lo) {
+
+      passing = Math.floor((hi - range.lo) / range.step) + 1;
+    }
+
+  } else {
+
+    const lo = range.lo + Math.ceil(Math.max(0, min10 - range.lo) / range.step) * range.step;
+
+    if (lo <= range.hi) {
+
+      passing = (range.hi - lo) / range.step + 1;
+    }
+  }
+
+  return passing / total;
+}
+
+function baseOdds(targets) {
+
+  let p = 1;
+
+  for (const target of targets) {
+
+    p *= pValueAtLeast(state.weapon.abilities[target.idx].range, target.min);
+  }
+
+  return p;
+}
+
+/* Probability that one Bonus/Bonus II pull satisfies every target:
+ * the required stats must all be drawn (uniformly, no repeats, from the
+ * pool minus the other color's stats) and each must clear its minimum. */
+function ultimateOdds(color, targets) {
+
+  const rangeKey = color;
+  const excluded = paramsOf(color === 'yellow' ? state.orange : state.yellow);
+  const lineCount = color === 'yellow' ? 2 : orangeCountFor(state.upgrade);
+  const poolSize = state.weapon.randomStats.filter(function (stat) {
+
+    return !excluded.has(stat.param);
+  }).length;
+
+  let p = 0;
+
+  if (targets.length <= lineCount) {
+
+    if (targets.length === 0) {
+
+      p = 1;
+
+    } else if (targets.length === 1) {
+
+      p = lineCount / poolSize;
+
+    } else {
+
+      p = 2 / (poolSize * (poolSize - 1));
+    }
+
+    for (const target of targets) {
+
+      p *= pValueAtLeast(state.weapon.randomStats[target.idx][rangeKey], target.min);
+    }
+  }
+
+  return p;
+}
+
+/* ================================================================
+ * TARGET VALIDATION — reasons the house refuses a bet
+ * ================================================================ */
+
+function ultimateTargetProblem(color, targets) {
+
+  const otherColor = color === 'yellow' ? 'orange' : 'yellow';
+  const otherParams = paramsOf(state[otherColor]);
+  const lineCount = color === 'yellow' ? 2 : orangeCountFor(state.upgrade);
+  const seen = new Set();
+  let result = null;
+
+  if (targets.length > lineCount) {
+
+    result = 'Only ' + lineCount + ' ' + color + ' line' + (lineCount === 1 ? ' exists' : 's exist') + ' — drop a target.';
+  }
+
+  for (const target of (result === null ? targets : [])) {
+
+    const stat = state.weapon.randomStats[target.idx];
+
+    if (seen.has(stat.param)) {
+
+      result = 'Stats never repeat — you’ve targeted ' + DATA.statNames[stat.param] + ' twice.';
+      break;
+    }
+
+    seen.add(stat.param);
+
+    if (otherParams.has(stat.param)) {
+
+      const article = otherColor === 'orange' ? 'an' : 'a';
+
+      result = DATA.statNames[stat.param] + ' currently sits on ' + article + ' ' + otherColor + ' line — reroll that first, stats never repeat.';
+      break;
+    }
+
+    if (target.min !== null && pValueAtLeast(stat[color], target.min) === 0) {
+
+      result = DATA.statNames[stat.param] + ' caps at ' + fmtTenths(stat[color].hi) + (stat.rate ? '%' : '') + ' — even this house won’t take that bet.';
+      break;
+    }
+  }
+
+  return result;
+}
+
+function baseTargetProblem(targets) {
+
+  let result = null;
+
+  for (const target of targets) {
+
+    const ability = state.weapon.abilities[target.idx];
+
+    if (pValueAtLeast(ability.range, target.min) === 0) {
+
+      result = statName(ability) + ' caps at ' + fmtTenths(goodness(ability.range.neg ? ability.range.lo : ability.range.hi, ability.range)) + (ability.rate ? '%' : '') + ' — dream smaller.';
+      break;
+    }
+  }
+
+  return result;
+}
+
+/* ================================================================
+ * RENDERING — item card
+ * ================================================================ */
+
+function lineRow(colorClass, dot, name, value10, rate, rangeLabel) {
+
+  const row = document.createElement('div');
+
+  row.className = 'stat-line ' + colorClass;
+  row.innerHTML =
+    '<span class="dot">' + dot + '</span>' +
+    '<span class="name"></span>' +
+    '<span class="val"></span>' +
+    '<span class="range"></span>';
+  row.querySelector('.name').textContent = name;
+  row.querySelector('.val').textContent = value10 === null ? '' : fmtStatValue(value10, rate);
+  row.querySelector('.range').textContent = rangeLabel;
+
+  return row;
+}
+
+function renderItemCard(bumpGroup) {
+
+  const weapon = state.weapon;
+
+  if (weapon === null) {
+
+    return;
+  }
+
+  $('item-card').classList.add('show');
+  $('item-icon').src = 'https://flyffipedia.com/Icons/Items/' + weapon.icon;
+  $('item-name').textContent = weapon.name + (state.upgrade > 0 ? ' +' + state.upgrade : '');
+  $('item-meta').textContent =
+    'Lv. ' + weapon.level + ' · ' + weapon.job + ' · ' +
+    weapon.subcategory + (weapon.twoHanded ? ' (two-handed)' : '') +
+    ' · Attack ' + weapon.minAttack + '~' + weapon.maxAttack +
+    ' · ' + (ATTACK_SPEED_LABELS[weapon.attackSpeed] || weapon.attackSpeed);
+
+  const baseBox = $('base-lines');
+
+  baseBox.innerHTML = '';
+
+  weapon.abilities.forEach(function (ability, idx) {
+
+    const row = lineRow('base', '◆', statName(ability), state.base[idx], ability.rate, fmtRangeLabel(ability.range, ability.rate));
+
+    if (bumpGroup === 'base') {
+
+      row.classList.add('bump');
+    }
+
+    baseBox.appendChild(row);
+  });
+
+  const yellowBox = $('yellow-lines');
+
+  yellowBox.innerHTML = '';
+
+  for (const line of state.yellow) {
+
+    const stat = weapon.randomStats[line.idx];
+    const row = lineRow('yellow', '◆', DATA.statNames[stat.param], line.value, stat.rate, fmtRangeLabel(stat.yellow, stat.rate));
+
+    if (bumpGroup === 'yellow') {
+
+      row.classList.add('bump');
+    }
+
+    yellowBox.appendChild(row);
+  }
+
+  const orangeBox = $('orange-lines');
+  const count = orangeCountFor(state.upgrade);
+
+  orangeBox.innerHTML = '';
+
+  for (const line of state.orange) {
+
+    const stat = weapon.randomStats[line.idx];
+    const row = lineRow('orange', '◆', DATA.statNames[stat.param], line.value, stat.rate, fmtRangeLabel(stat.orange, stat.rate));
+
+    if (bumpGroup === 'orange') {
+
+      row.classList.add('bump');
+    }
+
+    orangeBox.appendChild(row);
+  }
+
+  if (count < 1) {
+
+    orangeBox.appendChild(lineRow('locked', '◇', 'Locked — opens at +6', null, false, ''));
+  }
+
+  if (count < 2) {
+
+    orangeBox.appendChild(lineRow('locked', '◇', 'Locked — opens at +10', null, false, ''));
+  }
+}
+
+/* ================================================================
+ * RENDERING — targets UI
+ * ================================================================ */
+
+function renderBaseTargets() {
+
+  const box = $('base-targets');
+
+  box.innerHTML = '';
+
+  state.weapon.abilities.forEach(function (ability, idx) {
+
+    const row = document.createElement('div');
+
+    row.className = 't-row';
+    row.innerHTML =
+      '<span class="t-name"></span>' +
+      '<span class="t-range"></span>' +
+      '<input type="number" id="bt-' + idx + '" placeholder="any" step="any" aria-label="Minimum value">';
+    row.querySelector('.t-name').textContent = statName(ability);
+    row.querySelector('.t-range').textContent = fmtRangeLabel(ability.range, ability.rate);
+    box.appendChild(row);
+  });
+
+  $('base-tools').style.display = 'flex';
+}
+
+function ultimateSelectOptions(color) {
+
+  const rangeKey = color;
+  let html = '<option value="">— any stat —</option>';
+
+  state.weapon.randomStats.forEach(function (stat, idx) {
+
+    html += '<option value="' + idx + '">' + DATA.statNames[stat.param] + ' (' + fmtRangeLabel(stat[rangeKey], stat.rate) + ')</option>';
+  });
+
+  return html;
+}
+
+function renderUltimateTargets(color) {
+
+  const box = $(color + '-targets');
+
+  box.innerHTML = '';
+
+  for (let row = 0; row < 2; row += 1) {
+
+    const div = document.createElement('div');
+
+    div.className = 't-row';
+    div.innerHTML =
+      '<select id="' + color + '-stat-' + row + '" aria-label="Target stat">' + ultimateSelectOptions(color) + '</select>' +
+      '<input type="number" id="' + color + '-min-' + row + '" placeholder="min" step="any" aria-label="Minimum value">';
+    box.appendChild(div);
+  }
+
+  $(color + '-tools').style.display = 'flex';
+}
+
+/* Sets each selected row's minimum to the top of its range — perfection
+ * on demand. Rows still on "any stat" are left alone. */
+function demandUltimatePerfection(color) {
+
+  for (let row = 0; row < 2; row += 1) {
+
+    const select = $(color + '-stat-' + row);
+
+    if (select !== null && !select.disabled && select.value !== '') {
+
+      const stat = state.weapon.randomStats[parseInt(select.value, 10)];
+
+      $(color + '-min-' + row).value = fmtTenths(stat[color].hi);
+    }
+  }
+
+  refreshOddsAndButtons();
+}
+
+function clearUltimateTargets(color) {
+
+  for (let row = 0; row < 2; row += 1) {
+
+    const select = $(color + '-stat-' + row);
+
+    if (select !== null) {
+
+      select.value = '';
+      $(color + '-min-' + row).value = '';
+    }
+  }
+
+  refreshOddsAndButtons();
+}
+
+function syncTargetAvailability() {
+
+  const orangeCount = orangeCountFor(state.upgrade);
+
+  $('tg-orange').classList.toggle('disabled', orangeCount === 0);
+
+  for (let row = 0; row < 2; row += 1) {
+
+    const select = $('orange-stat-' + row);
+
+    if (select !== null) {
+
+      const off = row >= orangeCount;
+
+      select.disabled = off;
+      $('orange-min-' + row).disabled = off;
+    }
+  }
+}
+
+/* ================================================================
+ * RENDERING — odds + buttons
+ * ================================================================ */
+
+function oddsText(p, price) {
+
+  let result = '';
+
+  if (p > 0) {
+
+    const expectedPulls = 1 / p;
+    const fc = expectedPulls * price;
+    const perFc = penyaPerFc();
+
+    result = '1 in <strong>' + fmtInt(Math.max(1, expectedPulls)) + '</strong> pulls · expected damage <strong>' +
+      fmtInt(fc) + ' fc</strong>';
+
+    if (perFc > 0) {
+
+      result += ' ≈ ' + fmtPenya(fc * perFc) + ' Penya';
+    }
+
+    result += ' ≈ ' + fmtUsd(fcToUsd(fc));
+  }
+
+  return result;
+}
+
+function refreshOddsAndButtons() {
+
+  const weapon = state.weapon;
+  const orangeCount = orangeCountFor(state.upgrade);
+
+  for (const key of ['base', 'yellow', 'orange']) {
+
+    const status = $('status-' + key);
+
+    status.textContent = '';
+    $('pull-' + key).disabled = weapon === null || state.chasing;
+    $('chase-' + key).disabled = true;
+  }
+
+  if (weapon === null) {
+
+    return;
+  }
+
+  if (orangeCount === 0) {
+
+    $('pull-orange').disabled = true;
+    $('status-orange').textContent = 'locked below +6';
+  }
+
+  const bTargets = baseTargets();
+  const bProblem = baseTargetProblem(bTargets);
+  const oddsBase = $('odds-base');
+
+  oddsBase.classList.toggle('bad', bProblem !== null);
+
+  if (bProblem !== null) {
+
+    oddsBase.textContent = bProblem;
+
+  } else if (bTargets.length === 0) {
+
+    oddsBase.textContent = 'No targets set — the chase needs a dream.';
+
+  } else {
+
+    oddsBase.innerHTML = oddsText(baseOdds(bTargets), SCROLLS.base.price);
+    $('chase-base').disabled = state.chasing;
+  }
+
+  for (const color of ['yellow', 'orange']) {
+
+    const oddsEl = $('odds-' + color);
+    const targets = ultimateTargets(color);
+    const lineCount = color === 'yellow' ? 2 : orangeCount;
+
+    oddsEl.classList.remove('bad');
+
+    if (color === 'orange' && lineCount === 0) {
+
+      oddsEl.textContent = 'Locked until +6.';
+      continue;
+    }
+
+    const problem = ultimateTargetProblem(color, targets);
+
+    if (problem !== null) {
+
+      oddsEl.textContent = problem;
+      oddsEl.classList.add('bad');
+
+    } else if (targets.length === 0) {
+
+      oddsEl.textContent = 'No targets set — the chase needs a dream.';
+
+    } else {
+
+      oddsEl.innerHTML = oddsText(ultimateOdds(color, targets), SCROLLS[color].price);
+      $('chase-' + color).disabled = state.chasing;
+    }
+  }
+}
+
+/* ================================================================
+ * RENDERING — damage report + ledger
+ * ================================================================ */
+
+function damageHeadline(fc) {
+
+  const usd = fcToUsd(fc);
+  let result = 'Barely a tip. The dealer is insulted.';
+
+  if (usd >= 5000000) {
+
+    result = 'That was generational wealth. Your grandchildren will inherit a very shiny sword.';
+
+  } else if (usd >= 500000) {
+
+    result = 'That was a house. Not a down payment — a whole house, outright. Your landlord is a slot machine now.';
+
+  } else if (usd >= 100000) {
+
+    result = 'That was a down payment on a house, converted to pixels at the door.';
+
+  } else if (usd >= 25000) {
+
+    result = 'That was a new car. German. Leather seats. Vanished on the felt.';
+
+  } else if (usd >= 5000) {
+
+    result = 'That was a car. You rerolled a car into a slightly shinier sword.';
+
+  } else if (usd >= 1000) {
+
+    result = 'Four figures. The pit boss knows your name now.';
+
+  } else if (usd >= 250) {
+
+    result = 'A respectable donation to the Gala retirement fund.';
+
+  } else if (usd >= 50) {
+
+    result = 'Dinner for two, incinerated in style.';
+
+  } else if (usd >= 10) {
+
+    result = 'A modest offering. The machine is still hungry.';
+  }
+
+  return result;
+}
+
+function statCard(k, v, s, money) {
+
+  return '<div class="stat-card"><div class="k">' + k + '</div><div class="v' + (money ? ' money' : '') + '">' + v + '</div>' +
+    (s ? '<div class="s">' + s + '</div>' : '') + '</div>';
+}
+
+function renderDamage() {
+
+  const fc = state.spentFc;
+  const perFc = penyaPerFc();
+  const pulls = state.scrollCounts;
+  const totalScrolls = pulls.base + pulls.yellow + pulls.orange;
+
+  if (totalScrolls === 0 && state.ledger.length === 0) {
+
+    $('results').classList.remove('show');
+
+    return;
+  }
+
+  $('results').classList.add('show');
+  $('damage-headline').textContent =
+    '−' + fmtInt(fc) + ' fCoins (' + fmtUsd(fcToUsd(fc)) + '). ' + damageHeadline(fc);
+
+  let cards = '';
+
+  cards += statCard('Total damage', fmtInt(fc) + ' fc', 'across ' + fmtInt(totalScrolls) + ' scroll' + (totalScrolls === 1 ? '' : 's'), true);
+  cards += statCard('In real money', fmtUsd(fcToUsd(fc)), 'at 11,500 fc = $100', true);
+
+  if (perFc > 0) {
+
+    cards += statCard('In Penya (reference)', fmtPenya(fc * perFc), 'street value — scrolls do trade player-to-player.', false);
+  }
+
+  cards += statCard(
+    'Scrolls burned',
+    fmtInt(pulls.base) + ' · ' + fmtInt(pulls.yellow) + ' · ' + fmtInt(pulls.orange),
+    'Power · Bonus · Bonus II',
+    false
+  );
+
+  $('stat-cards').innerHTML = cards;
+  $('closing-line').textContent = 'The house always wins. The house is a cat wearing a monocle. Gala thanks you for your patronage.';
+}
+
+function ledgerLines(entry) {
+
+  const wrap = document.createElement('div');
+
+  wrap.className = 'l-lines';
+
+  for (const line of entry.lines) {
+
+    const span = document.createElement('span');
+
+    span.className = 'l-line ' + entry.group;
+    span.textContent = line.name + ' ' + fmtStatValue(line.value, line.rate);
+    wrap.appendChild(span);
+  }
+
+  return wrap;
+}
+
+function renderLedger() {
+
+  const body = $('ledger-body');
+  const total = state.ledger.length;
+  const shown = state.ledger.slice(-MAX_LEDGER_RENDERED);
+
+  body.innerHTML = '';
+
+  for (let i = shown.length - 1; i >= 0; i -= 1) {
+
+    const entry = shown[i];
+    const tr = document.createElement('tr');
+    const scrollCell = SCROLLS[entry.group].short + (entry.count > 1 ? ' ×' + fmtInt(entry.count) : '');
+    let verdict = '';
+
+    if (entry.chase) {
+
+      verdict = entry.hit
+        ? ' <span class="chip hit">hit</span>'
+        : ' <span class="chip miss">gave up</span>';
+    }
+
+    tr.innerHTML =
+      '<td class="num">' + fmtInt(entry.n) + '</td>' +
+      '<td>' + scrollCell + verdict + '</td>' +
+      '<td></td>' +
+      '<td class="num">−' + fmtInt(entry.cost) + ' fc</td>';
+    tr.children[2].appendChild(ledgerLines(entry));
+    body.appendChild(tr);
+  }
+
+  const trimmed = $('ledger-trimmed');
+
+  if (total > MAX_LEDGER_RENDERED) {
+
+    trimmed.style.display = 'block';
+    trimmed.textContent = fmtInt(total - MAX_LEDGER_RENDERED) + ' older entries are resting off-screen. The fCoins are still gone.';
+
+  } else {
+
+    trimmed.style.display = 'none';
+  }
+}
+
+function snapshotLines(group) {
+
+  const lines = [];
+
+  if (group === 'base') {
+
+    state.weapon.abilities.forEach(function (ability, idx) {
+
+      lines.push({ name: statName(ability), value: state.base[idx], rate: ability.rate });
+    });
+
+  } else {
+
+    for (const line of state[group]) {
+
+      const stat = state.weapon.randomStats[line.idx];
+
+      lines.push({ name: DATA.statNames[stat.param], value: line.value, rate: stat.rate });
+    }
+  }
+
+  return lines;
+}
+
+function logPulls(group, count, chase, hit) {
+
+  const cost = count * SCROLLS[group].price;
+
+  state.spentFc += cost;
+  state.scrollCounts[group] += count;
+  state.ledger.push({
+    n: state.ledger.length + 1,
+    group: group,
+    count: count,
+    cost: cost,
+    chase: chase,
+    hit: hit,
+    lines: snapshotLines(group),
+  });
+  renderDamage();
+  renderLedger();
+}
+
+/* ================================================================
+ * PULLING — single + chase
+ * ================================================================ */
+
+function applyRoll(group) {
+
+  if (group === 'base') {
+
+    state.base = rollBase(state.weapon);
+
+  } else if (group === 'yellow') {
+
+    state.yellow = rollUltimateLines(state.weapon, 'yellow', 2, paramsOf(state.orange));
+
+  } else {
+
+    state.orange = rollUltimateLines(state.weapon, 'orange', orangeCountFor(state.upgrade), paramsOf(state.yellow));
+  }
+}
+
+function singlePull(group) {
+
+  if (state.weapon === null || state.chasing) {
+
+    return;
+  }
+
+  $('pull-error').textContent = '';
+  applyRoll(group);
+  logPulls(group, 1, false, null);
+  renderItemCard(group);
+  refreshOddsAndButtons();
+}
+
+const chaseState = {
+  group: null,
+  targets: [],
+  cap: 0,
+  burned: 0,
+  captionTimer: null,
+  startedAt: 0,
+};
+
+function prefersReducedMotion() {
+
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function chaseSatisfied(group) {
+
+  let result = false;
+
+  if (group === 'base') {
+
+    result = baseSatisfied(state.base, chaseState.targets);
+
+  } else {
+
+    result = ultimateSatisfied(state[group], chaseState.targets, group);
+  }
+
+  return result;
+}
+
+function updateBurnDisplay(burned) {
+
+  $('burn-count').textContent = fmtInt(burned);
+  $('burn-cost').textContent = '−' + fmtInt(burned * SCROLLS[chaseState.group].price) + ' fCoins';
+}
+
+function chaseChunk() {
+
+  const group = chaseState.group;
+  const chunkStart = chaseState.burned;
+  let hit = false;
+
+  for (let i = 0; i < CHASE_CHUNK && chaseState.burned < chaseState.cap; i += 1) {
+
+    applyRoll(group);
+    chaseState.burned += 1;
+
+    if (chaseSatisfied(group)) {
+
+      hit = true;
+      break;
+    }
+  }
+
+  if (hit || chaseState.burned >= chaseState.cap || state.cashoutRequested) {
+
+    concludeChase(hit, chunkStart);
+
+  } else {
+
+    updateBurnDisplay(chaseState.burned);
+    setTimeout(chaseChunk, 0);
+  }
+}
+
+/* The rolls resolve in milliseconds, but a casino that pays out instantly
+ * has no showmanship: hold the overlay for a couple of seconds and let the
+ * counter tick up to the final tally before revealing the result. */
+function concludeChase(hit, countFrom) {
+
+  const remaining = MIN_CHASE_MS - (performance.now() - chaseState.startedAt);
+
+  if (remaining <= 50 || state.cashoutRequested || prefersReducedMotion()) {
+
+    updateBurnDisplay(chaseState.burned);
+    finishChase(hit);
+
+    return;
+  }
+
+  const animStart = performance.now();
+  const target = chaseState.burned;
+
+  const tick = function (now) {
+
+    if (state.cashoutRequested) {
+
+      updateBurnDisplay(target);
+      finishChase(hit);
+
+      return;
+    }
+
+    const t = Math.min(1, (now - animStart) / remaining);
+    const eased = 1 - Math.pow(1 - t, 3);
+
+    updateBurnDisplay(Math.round(countFrom + (target - countFrom) * eased));
+
+    if (t < 1) {
+
+      requestAnimationFrame(tick);
+
+    } else {
+
+      finishChase(hit);
+    }
+  };
+
+  requestAnimationFrame(tick);
+}
+
+function finishChase(hit) {
+
+  const group = chaseState.group;
+
+  clearInterval(chaseState.captionTimer);
+  $('overlay').classList.remove('show');
+  $('overlay').setAttribute('aria-hidden', 'true');
+  state.chasing = false;
+  state.cashoutRequested = false;
+  logPulls(group, chaseState.burned, true, hit);
+  renderItemCard(group);
+  refreshOddsAndButtons();
+
+  if (!hit) {
+
+    $('pull-error').textContent = chaseState.burned >= chaseState.cap
+      ? 'Gave up after ' + fmtInt(chaseState.burned) + ' scrolls. The item keeps its final roll — the casino keeps everything else.'
+      : 'Cashed out at ' + fmtInt(chaseState.burned) + ' scrolls. A rare display of self-control.';
+  }
+}
+
+function startChase(group) {
+
+  if (state.weapon === null || state.chasing) {
+
+    return;
+  }
+
+  $('pull-error').textContent = '';
+
+  const capRaw = parseInt($('give-up').value, 10);
+  const cap = Number.isFinite(capRaw) ? Math.min(Math.max(capRaw, 1), 10000000) : 10000;
+
+  chaseState.group = group;
+  chaseState.cap = cap;
+  chaseState.burned = 0;
+  chaseState.startedAt = performance.now();
+
+  if (group === 'base') {
+
+    chaseState.targets = baseTargets();
+
+  } else {
+
+    chaseState.targets = ultimateTargets(group);
+  }
+
+  state.chasing = true;
+  state.cashoutRequested = false;
+  refreshOddsAndButtons();
+  $('burn-count').textContent = '0';
+  $('burn-label').textContent = SCROLLS[group].label + 's burned';
+  $('burn-cost').textContent = '−0 fCoins';
+  $('spin-caption').textContent = SPIN_CAPTIONS[randInt(SPIN_CAPTIONS.length)];
+  chaseState.captionTimer = setInterval(function () {
+
+    $('spin-caption').textContent = SPIN_CAPTIONS[randInt(SPIN_CAPTIONS.length)];
+  }, 1400);
+  $('overlay').classList.add('show');
+  $('overlay').setAttribute('aria-hidden', 'false');
+  setTimeout(chaseChunk, 60);
+}
+
+/* ================================================================
+ * WEAPON PICKER + UPGRADE + WIRING
+ * ================================================================ */
+
+function selectWeapon(weapon) {
+
+  /* A new weapon is a new sitting — the ledger and damage report start clean. */
+  resetLedger();
+  state.weapon = weapon;
+  state.base = rollBase(weapon);
+  state.yellow = rollUltimateLines(weapon, 'yellow', 2, new Set());
+  state.orange = rollUltimateLines(weapon, 'orange', orangeCountFor(state.upgrade), paramsOf(state.yellow));
+  $('weapon-search').value = weapon.name;
+  $('weapon-drop').classList.remove('open');
+  $('item-foot').textContent = 'Fresh off the showroom floor — first rolls on the house.';
+  renderItemCard(null);
+  renderBaseTargets();
+  renderUltimateTargets('yellow');
+  renderUltimateTargets('orange');
+  syncTargetAvailability();
+  refreshOddsAndButtons();
+  console.info('[casino] weapon selected:', weapon.name);
+}
+
+function renderDrop(query) {
+
+  const drop = $('weapon-drop');
+  const q = query.trim().toLowerCase();
+  const matches = DATA.weapons.filter(function (weapon) {
+
+    return q === '' ||
+      weapon.name.toLowerCase().includes(q) ||
+      weapon.job.toLowerCase().includes(q) ||
+      weapon.subcategory.toLowerCase().includes(q);
+  });
+
+  drop.innerHTML = '';
+
+  if (matches.length === 0) {
+
+    drop.innerHTML = '<div class="none">Nothing ultimate matches that. The bouncer shrugs.</div>';
+
+  } else {
+
+    for (const weapon of matches) {
+
+      const btn = document.createElement('button');
+
+      btn.type = 'button';
+      btn.setAttribute('role', 'option');
+      btn.innerHTML = '<img alt="" loading="lazy"><span class="w-name"></span><span class="w-meta"></span>';
+      btn.querySelector('img').src = 'https://flyffipedia.com/Icons/Items/' + weapon.icon;
+      btn.querySelector('.w-name').textContent = weapon.name;
+      btn.querySelector('.w-meta').textContent = 'Lv. ' + weapon.level + ' · ' + weapon.job + ' · ' + weapon.subcategory;
+      btn.addEventListener('click', function () {
+
+        selectWeapon(weapon);
+      });
+      drop.appendChild(btn);
+    }
+  }
+
+  drop.classList.add('open');
+}
+
+function setUpgrade(level) {
+
+  const previous = orangeCountFor(state.upgrade);
+  const next = orangeCountFor(level);
+
+  state.upgrade = level;
+
+  for (const btn of $('upgrade-row').querySelectorAll('button')) {
+
+    btn.setAttribute('aria-pressed', String(parseInt(btn.dataset.level, 10) === level));
+  }
+
+  if (state.weapon !== null) {
+
+    if (next < state.orange.length) {
+
+      state.orange = state.orange.slice(0, next);
+
+    } else if (next > state.orange.length) {
+
+      const excluded = paramsOf(state.yellow);
+
+      for (const line of state.orange) {
+
+        excluded.add(state.weapon.randomStats[line.idx].param);
+      }
+
+      const fresh = rollUltimateLines(state.weapon, 'orange', next - state.orange.length, excluded);
+
+      state.orange = state.orange.concat(fresh);
+
+      if (previous < next) {
+
+        $('item-foot').textContent = 'New orange line rolled on the house — upgrading has its perks. Rerolling it does not.';
+      }
+    }
+
+    renderItemCard(null);
+    syncTargetAvailability();
+    refreshOddsAndButtons();
+  }
+}
+
+function updateEconSummary() {
+
+  const perFc = penyaPerFc();
+  const summary = $('econ-summary');
+
+  if (perFc <= 0) {
+
+    summary.textContent = 'Set a real exchange rate — even imaginary economies have standards.';
+
+    return;
+  }
+
+  const powerP = SCROLLS.base.price * perFc;
+  const bonusP = SCROLLS.yellow.price * perFc;
+  const baseCount = Math.floor(FC_PER_100_USD / SCROLLS.base.price);
+  const ultimateCount = Math.floor(FC_PER_100_USD / SCROLLS.yellow.price);
+
+  summary.innerHTML = 'At your rate: a Power scroll is worth <strong>' + fmtPenya(powerP) + '</strong> Penya, a Bonus scroll <strong>' +
+    fmtPenya(bonusP) + '</strong>. Your $100 buys <strong>' + fmtInt(FC_PER_100_USD) + '</strong> fCoins — enough for <strong>' +
+    fmtInt(baseCount) + '</strong> base rerolls or <strong>' +
+    fmtInt(ultimateCount) + '</strong> ultimate rerolls. The cashier waves warmly.';
+}
+
+function resetLedger() {
+
+  state.spentFc = 0;
+  state.scrollCounts = { base: 0, yellow: 0, orange: 0 };
+  state.ledger = [];
+  $('results').classList.remove('show');
+  $('pull-error').textContent = '';
+  console.info('[casino] ledger reset');
+}
+
+function init() {
+
+  if (!DATA || !Array.isArray(DATA.weapons)) {
+
+    document.body.innerHTML = '<p style="padding:40px;text-align:center">Failed to load weapon data — run <code>node tools/build-data.mjs</code> first.</p>';
+    console.error('[casino] window.CASINO_DATA missing — data/weapons.js not built?');
+
+    return;
+  }
+
+  console.info('[casino] loaded ' + DATA.weapons.length + ' ultimate weapons');
+
+  const upgradeRow = $('upgrade-row');
+
+  for (let level = 0; level <= 10; level += 1) {
+
+    const btn = document.createElement('button');
+
+    btn.type = 'button';
+    btn.dataset.level = String(level);
+    btn.textContent = '+' + level;
+    btn.setAttribute('aria-pressed', String(level === 0));
+    btn.addEventListener('click', function () {
+
+      setUpgrade(level);
+    });
+    upgradeRow.appendChild(btn);
+  }
+
+  const search = $('weapon-search');
+
+  search.addEventListener('input', function () {
+
+    renderDrop(search.value);
+  });
+  search.addEventListener('focus', function () {
+
+    renderDrop(search.value);
+  });
+  document.addEventListener('click', function (event) {
+
+    if (!event.target.closest('.picker')) {
+
+      $('weapon-drop').classList.remove('open');
+    }
+  });
+
+  for (const group of ['base', 'yellow', 'orange']) {
+
+    $('pull-' + group).addEventListener('click', function () {
+
+      singlePull(group);
+    });
+    $('chase-' + group).addEventListener('click', function () {
+
+      startChase(group);
+    });
+  }
+
+  $('cashout').addEventListener('click', function () {
+
+    state.cashoutRequested = true;
+  });
+
+  $('rate').addEventListener('input', function () {
+
+    updateEconSummary();
+    renderDamage();
+    refreshOddsAndButtons();
+  });
+
+  $('reset-ledger').addEventListener('click', resetLedger);
+
+  $('base-perfect').addEventListener('click', function () {
+
+    state.weapon.abilities.forEach(function (ability, idx) {
+
+      const best = ability.range.neg ? -ability.range.lo : ability.range.hi;
+
+      $('bt-' + idx).value = fmtTenths(best);
+    });
+    refreshOddsAndButtons();
+  });
+  $('base-clear').addEventListener('click', function () {
+
+    state.weapon.abilities.forEach(function (ability, idx) {
+
+      $('bt-' + idx).value = '';
+    });
+    refreshOddsAndButtons();
+  });
+
+  for (const color of ['yellow', 'orange']) {
+
+    $(color + '-perfect').addEventListener('click', function () {
+
+      demandUltimatePerfection(color);
+    });
+    $(color + '-clear').addEventListener('click', function () {
+
+      clearUltimateTargets(color);
+    });
+  }
+
+  for (const boxId of ['base-targets', 'yellow-targets', 'orange-targets']) {
+
+    $(boxId).addEventListener('input', refreshOddsAndButtons);
+    $(boxId).addEventListener('change', refreshOddsAndButtons);
+  }
+
+  updateEconSummary();
+  refreshOddsAndButtons();
+}
+
+init();
+</script>
+</body>
+</html>

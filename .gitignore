@@ -1,0 +1,3 @@
+# Raw Flyffulator data dumps — 40MB+ of source JSON, not needed to run the
+# site. data/weapons.js is the committed, generated artifact. See README.
+data-src/
