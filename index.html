@@ -1390,9 +1390,9 @@ const CHASE_CHUNK = 200000;
 const MIN_CHASE_MS = 2400;
 
 const SCROLLS = {
-  base: { label: 'Scroll of Ultimate Power', short: 'Power', price: 300 },
-  yellow: { label: 'Scroll of Ultimate Bonus', short: 'Bonus', price: 1000 },
-  orange: { label: 'Scroll of Ultimate Bonus II', short: 'Bonus II', price: 1000 },
+  base: { label: 'Scroll of Ultimate Power', plural: 'Scrolls of Ultimate Power', short: 'Power', price: 300 },
+  yellow: { label: 'Scroll of Ultimate Bonus', plural: 'Scrolls of Ultimate Bonus', short: 'Bonus', price: 1000 },
+  orange: { label: 'Scroll of Ultimate Bonus II', plural: 'Scrolls of Ultimate Bonus II', short: 'Bonus II', price: 1000 },
 };
 
 const ATTACK_SPEED_LABELS = {
@@ -2767,7 +2767,7 @@ function startChase(group) {
   state.cashoutRequested = false;
   refreshOddsAndButtons();
   $('burn-count').textContent = '0';
-  $('burn-label').textContent = SCROLLS[group].label + 's burned';
+  $('burn-label').textContent = SCROLLS[group].plural + ' burned';
   $('burn-cost').textContent = '−0 fCoins';
   $('spin-caption').textContent = SPIN_CAPTIONS[randInt(SPIN_CAPTIONS.length)];
   chaseState.captionTimer = setInterval(function () {
