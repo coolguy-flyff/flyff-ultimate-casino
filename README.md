@@ -27,8 +27,8 @@ numbers are pretty or the (hypothetical) wallet gives out.
    optional minimum) and choose whether the chase stops when **1 or 2** of them
    land on a single roll — "healing ≥10% *or* casting speed ≥10%" is one chase.
    The machine burns scrolls until the quota is met or the give-up cap saves you.
-   Exact odds and expected damage are disclosed before every chase, because this
-   house is honest about being a casino.
+   Exact odds, expected damage, the median cost, and the worst-1-in-20 cost are all
+   disclosed before every chase, because this house is honest about being a casino.
 
 Every scroll lands in the ledger; the damage report keeps the running total in
 fCoins, penya, and real money.

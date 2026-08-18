@@ -2249,6 +2249,20 @@ function syncTargetAvailability() {
  * RENDERING — odds + buttons
  * ================================================================ */
 
+/* Smallest n with P(hit within n scrolls) >= q, for a geometric chase
+ * with per-scroll success p. */
+function geometricPercentile(p, q) {
+
+  let result = 1;
+
+  if (p < 1) {
+
+    result = Math.ceil(Math.log(1 - q) / Math.log(1 - p));
+  }
+
+  return result;
+}
+
 function oddsText(p, price) {
 
   let result = '';
@@ -2258,6 +2272,8 @@ function oddsText(p, price) {
     const expectedPulls = 1 / p;
     const fc = expectedPulls * price;
     const perFc = penyaPerFc();
+    const median = geometricPercentile(p, 0.5);
+    const tail = geometricPercentile(p, 0.95);
 
     result = '1 in <strong>' + fmtInt(Math.max(1, expectedPulls)) + '</strong> pulls · expected damage <strong>' +
       fmtInt(fc) + ' fc</strong>';
@@ -2268,6 +2284,8 @@ function oddsText(p, price) {
     }
 
     result += ' ≈ ' + fmtUsd(fcToUsd(fc));
+    result += '<br>half hit within <strong>' + fmtInt(median) + '</strong> (' + fmtUsd(fcToUsd(median * price)) +
+      ') · the unluckiest 1 in 20 burns <strong>' + fmtInt(tail) + '+</strong> (' + fmtUsd(fcToUsd(tail * price)) + ')';
   }
 
   return result;
