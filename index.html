@@ -1251,7 +1251,15 @@
           <h3>Yellow lines</h3>
           <div class="tg-body">
             <div id="yellow-targets"><p class="hint">Pick a weapon first.</p></div>
+            <div class="t-row t-need" id="yellow-need-row" style="display: none;">
+              <span class="t-name">Stop when</span>
+              <select id="yellow-need" aria-label="How many targets must hit">
+                <option value="1">1 of these hits</option>
+                <option value="2">2 of these hit</option>
+              </select>
+            </div>
             <div class="tg-tools" id="yellow-tools" style="display: none;">
+              <button type="button" id="yellow-add">add a stat</button>
               <button type="button" id="yellow-perfect">demand perfection</button>
               <button type="button" id="yellow-clear">clear</button>
             </div>
@@ -1263,7 +1271,15 @@
           <h3>Orange lines</h3>
           <div class="tg-body">
             <div id="orange-targets"><p class="hint">Pick a weapon first.</p></div>
+            <div class="t-row t-need" id="orange-need-row" style="display: none;">
+              <span class="t-name">Stop when</span>
+              <select id="orange-need" aria-label="How many targets must hit">
+                <option value="1">1 of these hits</option>
+                <option value="2">2 of these hit</option>
+              </select>
+            </div>
             <div class="tg-tools" id="orange-tools" style="display: none;">
+              <button type="button" id="orange-add">add a stat</button>
               <button type="button" id="orange-perfect">demand perfection</button>
               <button type="button" id="orange-clear">clear</button>
             </div>
@@ -1276,7 +1292,7 @@
         <label for="give-up">Give up after (scrolls, per chase)</label>
         <input type="number" id="give-up" value="10000" min="1" max="10000000" step="1">
       </div>
-      <p class="hint">Set a target stat and an optional minimum, then hit <em>Chase</em> — the machine burns scrolls until every target in the group lands, or the cap saves you from yourself. Blank minimums accept any value; blank stat rows are ignored.</p>
+      <p class="hint">For yellow and orange, build a wish list: target as many stats as you like (each with an optional minimum) and choose whether the chase stops when <em>1</em> or <em>2</em> of them land on a single roll. Blank minimums accept any value; blank stat rows are ignored; duplicate stats collapse into one. Base lines still demand every minimum at once.</p>
     </section>
 
     <section class="results" id="results" aria-live="polite">
@@ -1417,6 +1433,9 @@ const state = {
   chasing: false,
   cashoutRequested: false,
 };
+
+/* How many candidate rows each ultimate wish list currently shows. */
+const targetRows = { yellow: 2, orange: 2 };
 
 /* ================================================================
  * SMALL HELPERS
@@ -1685,18 +1704,42 @@ function baseTargets() {
   return result;
 }
 
+/* Collects the wish list for a color: every filled row, deduplicated by
+ * stat (first occurrence wins — a second row for the same stat is redundant,
+ * since a stat can only ever occupy one line). */
 function ultimateTargets(color) {
 
   const result = [];
+  const seen = new Set();
 
-  for (let row = 0; row < 2; row += 1) {
+  for (let row = 0; row < targetRows[color]; row += 1) {
 
     const select = $(color + '-stat-' + row);
 
     if (select !== null && !select.disabled && select.value !== '') {
 
-      result.push({ idx: parseInt(select.value, 10), min: readMin($(color + '-min-' + row)) });
+      const idx = parseInt(select.value, 10);
+      const param = state.weapon.randomStats[idx].param;
+
+      if (!seen.has(param)) {
+
+        seen.add(param);
+        result.push({ idx: idx, min: readMin($(color + '-min-' + row)) });
+      }
     }
+  }
+
+  return result;
+}
+
+function ultimateNeed(color) {
+
+  const select = $(color + '-need');
+  let result = 1;
+
+  if (select !== null && select.value === '2') {
+
+    result = 2;
   }
 
   return result;
@@ -1720,11 +1763,12 @@ function baseSatisfied(values, targets) {
   return result;
 }
 
-/* Stats never repeat within a roll, so each requirement can only ever be
- * matched by the single line holding that stat. */
-function ultimateSatisfied(lines, targets, rangeKey) {
+/* Counts how many wish-list entries this roll satisfies. Stats never repeat
+ * within a roll, so each entry can only ever be matched by the single line
+ * holding its stat. The roll passes once `need` entries are met. */
+function ultimateSatisfied(lines, targets, rangeKey, need) {
 
-  let result = true;
+  let hits = 0;
 
   for (const target of targets) {
 
@@ -1733,25 +1777,23 @@ function ultimateSatisfied(lines, targets, rangeKey) {
       return l.idx === target.idx;
     });
 
-    if (line === undefined) {
-
-      result = false;
-      break;
-    }
-
-    if (target.min !== null) {
+    if (line !== undefined) {
 
       const range = state.weapon.randomStats[target.idx][rangeKey];
 
-      if (goodness(line.value, range) < target.min) {
+      if (target.min === null || goodness(line.value, range) >= target.min) {
 
-        result = false;
-        break;
+        hits += 1;
+
+        if (hits >= need) {
+
+          break;
+        }
       }
     }
   }
 
-  return result;
+  return hits >= need;
 }
 
 /* ================================================================
@@ -1803,39 +1845,74 @@ function baseOdds(targets) {
   return p;
 }
 
-/* Probability that one Bonus/Bonus II pull satisfies every target:
- * the required stats must all be drawn (uniformly, no repeats, from the
- * pool minus the other color's stats) and each must clear its minimum. */
-function ultimateOdds(color, targets) {
+/* Probability that one Bonus/Bonus II pull satisfies at least `need` entries
+ * of the wish list. Lines draw distinct stats uniformly from the pool (minus
+ * the other color's stats); each drawn wish-list stat then clears its minimum
+ * with probability q. With two lines, the pull is a uniform pair of distinct
+ * stats: sum P(hit) over pairs holding one candidate and pairs holding two. */
+function ultimateOdds(color, targets, need) {
 
-  const rangeKey = color;
   const excluded = paramsOf(color === 'yellow' ? state.orange : state.yellow);
   const lineCount = color === 'yellow' ? 2 : orangeCountFor(state.upgrade);
   const poolSize = state.weapon.randomStats.filter(function (stat) {
 
     return !excluded.has(stat.param);
   }).length;
+  const qs = targets.map(function (target) {
 
+    return pValueAtLeast(state.weapon.randomStats[target.idx][color], target.min);
+  });
+  const k = qs.length;
   let p = 0;
 
-  if (targets.length <= lineCount) {
+  if (k === 0 || need > Math.min(k, lineCount)) {
 
-    if (targets.length === 0) {
+    p = 0;
 
-      p = 1;
+  } else if (lineCount === 1) {
 
-    } else if (targets.length === 1) {
+    let sum = 0;
 
-      p = lineCount / poolSize;
+    for (const q of qs) {
+
+      sum += q;
+    }
+
+    p = sum / poolSize;
+
+  } else {
+
+    const pairs = poolSize * (poolSize - 1) / 2;
+    let singleTerm = 0;
+    let pairTerm = 0;
+
+    for (const q of qs) {
+
+      singleTerm += q * (poolSize - k);
+    }
+
+    for (let i = 0; i < k; i += 1) {
+
+      for (let j = i + 1; j < k; j += 1) {
+
+        if (need === 1) {
+
+          pairTerm += 1 - (1 - qs[i]) * (1 - qs[j]);
+
+        } else {
+
+          pairTerm += qs[i] * qs[j];
+        }
+      }
+    }
+
+    if (need === 1) {
+
+      p = (singleTerm + pairTerm) / pairs;
 
     } else {
 
-      p = 2 / (poolSize * (poolSize - 1));
-    }
-
-    for (const target of targets) {
-
-      p *= pValueAtLeast(state.weapon.randomStats[target.idx][rangeKey], target.min);
+      p = pairTerm / pairs;
     }
   }
 
@@ -1846,30 +1923,25 @@ function ultimateOdds(color, targets) {
  * TARGET VALIDATION — reasons the house refuses a bet
  * ================================================================ */
 
-function ultimateTargetProblem(color, targets) {
+function ultimateTargetProblem(color, targets, need) {
 
   const otherColor = color === 'yellow' ? 'orange' : 'yellow';
   const otherParams = paramsOf(state[otherColor]);
   const lineCount = color === 'yellow' ? 2 : orangeCountFor(state.upgrade);
-  const seen = new Set();
   let result = null;
 
-  if (targets.length > lineCount) {
+  if (need > lineCount) {
 
-    result = 'Only ' + lineCount + ' ' + color + ' line' + (lineCount === 1 ? ' exists' : 's exist') + ' — drop a target.';
+    result = 'Only ' + lineCount + ' ' + color + ' line exists — stop at 1.';
+
+  } else if (targets.length > 0 && need > targets.length) {
+
+    result = 'Stopping at ' + need + ' hits needs at least ' + need + ' targeted stats.';
   }
 
   for (const target of (result === null ? targets : [])) {
 
     const stat = state.weapon.randomStats[target.idx];
-
-    if (seen.has(stat.param)) {
-
-      result = 'Stats never repeat — you’ve targeted ' + DATA.statNames[stat.param] + ' twice.';
-      break;
-    }
-
-    seen.add(stat.param);
 
     if (otherParams.has(stat.param)) {
 
@@ -2048,13 +2120,27 @@ function ultimateSelectOptions(color) {
   return html;
 }
 
-function renderUltimateTargets(color) {
+function renderUltimateTargets(color, preserve) {
 
   const box = $(color + '-targets');
+  const previous = [];
+
+  if (preserve === true) {
+
+    for (let row = 0; row < targetRows[color]; row += 1) {
+
+      const select = $(color + '-stat-' + row);
+
+      if (select !== null) {
+
+        previous.push({ stat: select.value, min: $(color + '-min-' + row).value });
+      }
+    }
+  }
 
   box.innerHTML = '';
 
-  for (let row = 0; row < 2; row += 1) {
+  for (let row = 0; row < targetRows[color]; row += 1) {
 
     const div = document.createElement('div');
 
@@ -2063,16 +2149,37 @@ function renderUltimateTargets(color) {
       '<select id="' + color + '-stat-' + row + '" aria-label="Target stat">' + ultimateSelectOptions(color) + '</select>' +
       '<input type="number" id="' + color + '-min-' + row + '" placeholder="min" step="any" aria-label="Minimum value">';
     box.appendChild(div);
+
+    if (row < previous.length) {
+
+      $(color + '-stat-' + row).value = previous[row].stat;
+      $(color + '-min-' + row).value = previous[row].min;
+    }
   }
 
+  $(color + '-need-row').style.display = 'flex';
   $(color + '-tools').style.display = 'flex';
+  $(color + '-add').disabled = targetRows[color] >= state.weapon.randomStats.length;
+}
+
+function addTargetRow(color) {
+
+  if (state.weapon === null) {
+
+    return;
+  }
+
+  targetRows[color] = Math.min(targetRows[color] + 1, state.weapon.randomStats.length);
+  renderUltimateTargets(color, true);
+  syncTargetAvailability();
+  refreshOddsAndButtons();
 }
 
 /* Sets each selected row's minimum to the top of its range — perfection
  * on demand. Rows still on "any stat" are left alone. */
 function demandUltimatePerfection(color) {
 
-  for (let row = 0; row < 2; row += 1) {
+  for (let row = 0; row < targetRows[color]; row += 1) {
 
     const select = $(color + '-stat-' + row);
 
@@ -2089,37 +2196,52 @@ function demandUltimatePerfection(color) {
 
 function clearUltimateTargets(color) {
 
-  for (let row = 0; row < 2; row += 1) {
-
-    const select = $(color + '-stat-' + row);
-
-    if (select !== null) {
-
-      select.value = '';
-      $(color + '-min-' + row).value = '';
-    }
-  }
-
+  targetRows[color] = 2;
+  $(color + '-need').value = '1';
+  renderUltimateTargets(color, false);
+  syncTargetAvailability();
   refreshOddsAndButtons();
 }
 
+/* Below +6 the whole orange wish list is inert; at +6 the second seat is
+ * gone, so "2 of these hit" is off the menu. Candidate rows themselves are
+ * never capped by line count — the wish list may be as long as the pool. */
 function syncTargetAvailability() {
 
   const orangeCount = orangeCountFor(state.upgrade);
+  const orangeOff = orangeCount === 0;
 
-  $('tg-orange').classList.toggle('disabled', orangeCount === 0);
+  $('tg-orange').classList.toggle('disabled', orangeOff);
 
-  for (let row = 0; row < 2; row += 1) {
+  for (let row = 0; row < targetRows.orange; row += 1) {
 
     const select = $('orange-stat-' + row);
 
     if (select !== null) {
 
-      const off = row >= orangeCount;
-
-      select.disabled = off;
-      $('orange-min-' + row).disabled = off;
+      select.disabled = orangeOff;
+      $('orange-min-' + row).disabled = orangeOff;
     }
+  }
+
+  const needSelect = $('orange-need');
+
+  needSelect.disabled = orangeOff;
+  needSelect.querySelector('option[value="2"]').disabled = orangeCount < 2;
+
+  if (orangeCount < 2 && needSelect.value === '2') {
+
+    needSelect.value = '1';
+  }
+
+  for (const id of ['orange-add', 'orange-perfect', 'orange-clear']) {
+
+    $(id).disabled = orangeOff;
+  }
+
+  if (!orangeOff && state.weapon !== null) {
+
+    $('orange-add').disabled = targetRows.orange >= state.weapon.randomStats.length;
   }
 }
 
@@ -2200,6 +2322,7 @@ function refreshOddsAndButtons() {
 
     const oddsEl = $('odds-' + color);
     const targets = ultimateTargets(color);
+    const need = ultimateNeed(color);
     const lineCount = color === 'yellow' ? 2 : orangeCount;
 
     oddsEl.classList.remove('bad');
@@ -2210,7 +2333,7 @@ function refreshOddsAndButtons() {
       continue;
     }
 
-    const problem = ultimateTargetProblem(color, targets);
+    const problem = ultimateTargetProblem(color, targets, need);
 
     if (problem !== null) {
 
@@ -2223,7 +2346,7 @@ function refreshOddsAndButtons() {
 
     } else {
 
-      oddsEl.innerHTML = oddsText(ultimateOdds(color, targets), SCROLLS[color].price);
+      oddsEl.innerHTML = oddsText(ultimateOdds(color, targets, need), SCROLLS[color].price);
       $('chase-' + color).disabled = state.chasing;
     }
   }
@@ -2465,6 +2588,7 @@ function singlePull(group) {
 const chaseState = {
   group: null,
   targets: [],
+  need: 1,
   cap: 0,
   burned: 0,
   captionTimer: null,
@@ -2486,7 +2610,7 @@ function chaseSatisfied(group) {
 
   } else {
 
-    result = ultimateSatisfied(state[group], chaseState.targets, group);
+    result = ultimateSatisfied(state[group], chaseState.targets, group, chaseState.need);
   }
 
   return result;
@@ -2618,6 +2742,7 @@ function startChase(group) {
   } else {
 
     chaseState.targets = ultimateTargets(group);
+    chaseState.need = ultimateNeed(group);
   }
 
   state.chasing = true;
@@ -2651,10 +2776,14 @@ function selectWeapon(weapon) {
   $('weapon-search').value = weapon.name;
   $('weapon-drop').classList.remove('open');
   $('item-foot').textContent = 'Fresh off the showroom floor — first rolls on the house.';
+  targetRows.yellow = 2;
+  targetRows.orange = 2;
+  $('yellow-need').value = '1';
+  $('orange-need').value = '1';
   renderItemCard(null);
   renderBaseTargets();
-  renderUltimateTargets('yellow');
-  renderUltimateTargets('orange');
+  renderUltimateTargets('yellow', false);
+  renderUltimateTargets('orange', false);
   syncTargetAvailability();
   refreshOddsAndButtons();
   console.info('[casino] weapon selected:', weapon.name);
@@ -2879,6 +3008,11 @@ function init() {
 
       clearUltimateTargets(color);
     });
+    $(color + '-add').addEventListener('click', function () {
+
+      addTargetRow(color);
+    });
+    $(color + '-need').addEventListener('change', refreshOddsAndButtons);
   }
 
   for (const boxId of ['base-targets', 'yellow-targets', 'orange-targets']) {

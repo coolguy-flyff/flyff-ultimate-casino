@@ -22,11 +22,13 @@ numbers are pretty or the (hypothetical) wallet gives out.
    - **Scroll of Ultimate Bonus II** (1,000 fc) rerolls the *orange ultimate lines*
      (half-strength ranges). Disabled below +6.
 4. **Pull or chase** — the pull buttons sit right next to the weapon for one scroll
-   at a time. Below them, set target stats and minimum values per group (any number
-   of base lines, up to two yellow, up to two orange) and hit *Chase* — the machine
-   burns scrolls until they all land or the give-up cap saves you. Exact odds and
-   expected damage are disclosed before every chase, because this house is honest
-   about being a casino.
+   at a time. Below them, set minimums on any number of base lines, or build a
+   yellow/orange *wish list*: target as many stats as you like (each with an
+   optional minimum) and choose whether the chase stops when **1 or 2** of them
+   land on a single roll — "healing ≥10% *or* casting speed ≥10%" is one chase.
+   The machine burns scrolls until the quota is met or the give-up cap saves you.
+   Exact odds and expected damage are disclosed before every chase, because this
+   house is honest about being a casino.
 
 Every scroll lands in the ledger; the damage report keeps the running total in
 fCoins, penya, and real money.
